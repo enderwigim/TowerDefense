@@ -17,6 +17,12 @@ class Game:
         # self.font = pygame.font.Font('Arial', 32)
         self.running = True
 
+    def create_tilemap(self):
+        for i, row in enumerate(TILEMAP):
+            for j, column in enumerate(row):
+                if column == "B":
+                    Wall(self, j, i)
+
     def new(self):
         # A new game starts
         self.playing = True
@@ -26,6 +32,7 @@ class Game:
         self.all_enemies = pygame.sprite.LayeredUpdates()
         self.all_attacks = pygame.sprite.LayeredUpdates()
 
+        self.create_tilemap()
         self.all_sprites.add(PlayerTest(self, 1, 2))
 
     def events(self):
@@ -38,7 +45,7 @@ class Game:
         self.all_sprites.update()
 
     def draw(self):
-        self.screen.fill(WHITE)
+        self.screen.fill(BLACK)
         self.all_sprites.draw(self.screen)
         self.clock.tick(FPS)
         pygame.display.update()
