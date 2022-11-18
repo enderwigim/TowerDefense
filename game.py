@@ -20,7 +20,7 @@ class Game:
     def create_tilemap(self):
         for i, row in enumerate(TILEMAP):
             for j, column in enumerate(row):
-                if column == "B":
+                if column == "1":
                     Wall(self, j, i)
 
     def new(self):
