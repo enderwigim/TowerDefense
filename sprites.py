@@ -1,6 +1,7 @@
 import pygame
 from config import *
-# import math
+import math
+import numpy
 # import random
 
 
@@ -100,6 +101,7 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
         super().__init__()
 
+        self.health = 5
         self.game = game
         self._layer = ENEMIES_LAYER
         self.groups = self.game.all_sprites, self.game.all_enemies
@@ -145,6 +147,9 @@ class Enemy(pygame.sprite.Sprite):
 
         self.attack_town()
 
+        if self.health <= 0:
+            self.kill()
+
     def collision(self, direction):
         if direction == "x":
             hits = pygame.sprite.spritecollide(self, self.game.all_blocks, False)
@@ -177,13 +182,13 @@ class Enemy(pygame.sprite.Sprite):
 
     def movement(self):
         if self.facing == "right":
-            self.x_change += PLAYER_SPEED
+            self.x_change += ENEMIES_SPEED
         if self.facing == "left":
-            self.x_change -= PLAYER_SPEED
+            self.x_change -= ENEMIES_SPEED
         if self.facing == "down":
-            self.y_change += PLAYER_SPEED
+            self.y_change += ENEMIES_SPEED
         if self.facing == "up":
-            self.y_change -= PLAYER_SPEED
+            self.y_change -= ENEMIES_SPEED
 
 
 class Town(pygame.sprite.Sprite):
@@ -192,7 +197,7 @@ class Town(pygame.sprite.Sprite):
 
         self.health = 25
         self.game = game
-        self._layer = ENEMIES_LAYER
+        self._layer = TOWN_LAYER
         self.groups = self.game.town
         pygame.sprite.Sprite.__init__(self, self.groups)
 
@@ -208,7 +213,81 @@ class Town(pygame.sprite.Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
 
+
+
     def update(self):
         if self.health == 0:
             self.kill()
 
+class Turret(pygame.sprite.Sprite):
+    def __init__(self, game, x, y):
+        super().__init__()
+
+        self.game = game
+        self._layer = TURRET_LAYER
+        self.groups = self.game.turrets
+        pygame.sprite.Sprite.__init__(self, self.groups)
+
+        self.x = x * TILESIZE
+        self.y = y * TILESIZE
+        self.width = TILESIZE
+        self.height = TILESIZE
+
+        self.image = pygame.Surface([self.width, self.height])
+        self.image.fill(YELLOW)
+
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y
+
+    def update(self):
+        self.create_bullets()
+
+
+    def create_bullets(self):
+        rand_num = numpy.random.uniform(0, 50)
+        if int(rand_num) == 25:
+            new_bullet = Bullets(self.game, self.rect.x, self.rect.y)
+            self.game.all_sprites.add(new_bullet)
+
+
+class Bullets(pygame.sprite.Sprite):
+    def __init__(self, game, x, y):
+        super().__init__()
+        self.game = game
+        self._layer = BULLET_LAYER
+        self.groups = self.game.bullets, self.game.all_sprites
+        pygame.sprite.Sprite.__init__(self, self.groups)
+
+        self.x = x
+        self.y = y
+        self.width = TILESIZE
+        self.height = TILESIZE
+
+        self.image = pygame.Surface([self.width, self.height])
+        self.image.fill(YELLOW)
+
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y
+
+    def update(self):
+        self.move_to_enemy()
+        self.attack_enemy()
+
+    def move_to_enemy(self):
+        # Find direction vector (dx, dy) between enemy and player.
+        dx, dy = self.game.all_enemies.get_sprite(0).rect.x - self.rect.x, self.game.all_enemies.get_sprite(0).rect.y - self.rect.y
+        dist = math.hypot(dx, dy)
+        dx, dy = dx / dist, dy / dist  # Normalize.
+        # Move along this normalized vector towards the player at current speed.
+        self.rect.x += dx * BULLET_SPEED
+        self.rect.y += dy * BULLET_SPEED
+
+    def attack_enemy(self):
+        hit_enemy = pygame.sprite.spritecollide(self, self.game.all_enemies, False)
+
+        if hit_enemy:
+            hit_enemy[0].health -= 1
+            print(hit_enemy[0].health)
+            self.kill()

@@ -4,17 +4,30 @@ TILESIZE = 32
 FPS = 60
 
 # Player Related
-PLAYER_LAYER = 2
 PLAYER_SPEED = 3
+
 # Colors
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
+YELLOW = (255, 255, 0)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
-# Enemies related
+# Bullet Related
+BULLET_SPEED = 6
+MAX_BULLETS = 5
+
+# ENEMY RELATED
+ENEMIES_SPEED = 3
+
+
+# Layers
+TOWN_LAYER = 1
+TURRET_LAYER = 2
 ENEMIES_LAYER = 2
+BULLET_LAYER = 3
+PLAYER_LAYER = 3
 
 
 # MAP RELATED

@@ -6,6 +6,7 @@ import random
 
 class Game:
     def __init__(self):
+        self.bullets = None
         self.town = None
         self.player = None
         self.all_attacks = None
@@ -13,6 +14,7 @@ class Game:
         self.all_blocks = None
         self.playing = None
         self.all_sprites = None
+        self.turrets = None
         pygame.init()
         self.screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
         self.clock = pygame.time.Clock()
@@ -37,10 +39,13 @@ class Game:
         self.all_enemies = pygame.sprite.LayeredUpdates()
         self.all_attacks = pygame.sprite.LayeredUpdates()
         self.town = pygame.sprite.LayeredUpdates()
+        self.turrets = pygame.sprite.LayeredUpdates()
+        self.bullets = pygame.sprite.LayeredUpdates()
 
         self.create_tilemap()
         self.all_sprites.add(PlayerTest(self, 1, 2))
         self.all_sprites.add(Town(self, 27, 22))
+        self.all_sprites.add(Turret(self, 22, 22))
         self.create_enemies()
 
     def events(self):
