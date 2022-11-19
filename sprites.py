@@ -143,6 +143,7 @@ class Enemy(pygame.sprite.Sprite):
         self.x_change = 0
         self.y_change = 0
 
+        self.attack_town()
 
     def collision(self, direction):
         if direction == "x":
@@ -167,6 +168,13 @@ class Enemy(pygame.sprite.Sprite):
                     self.rect.y = hits[0].rect.bottom
                     self.facing = "left"
 
+    def attack_town(self):
+        town_attack = pygame.sprite.spritecollide(self, self.game.town, False)
+        if town_attack:
+            self.game.town.get_sprite(0).health -= 1
+            print(self.game.town.get_sprite(0).health)
+            self.kill()
+
     def movement(self):
         if self.facing == "right":
             self.x_change += PLAYER_SPEED
@@ -176,3 +184,31 @@ class Enemy(pygame.sprite.Sprite):
             self.y_change += PLAYER_SPEED
         if self.facing == "up":
             self.y_change -= PLAYER_SPEED
+
+
+class Town(pygame.sprite.Sprite):
+    def __init__(self, game, x, y):
+        super().__init__()
+
+        self.health = 25
+        self.game = game
+        self._layer = ENEMIES_LAYER
+        self.groups = self.game.town
+        pygame.sprite.Sprite.__init__(self, self.groups)
+
+        self.x = x * TILESIZE
+        self.y = y * TILESIZE
+        self.width = TILESIZE * 2
+        self.height = TILESIZE
+
+        self.image = pygame.Surface([self.width, self.height])
+        self.image.fill(GREEN)
+
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y
+
+    def update(self):
+        if self.health == 0:
+            self.kill()
+

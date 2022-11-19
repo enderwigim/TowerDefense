@@ -2,9 +2,11 @@ import pygame
 from config import *
 from sprites import *
 import sys
+import random
 
 class Game:
     def __init__(self):
+        self.town = None
         self.player = None
         self.all_attacks = None
         self.all_enemies = None
@@ -34,8 +36,11 @@ class Game:
         self.all_blocks = pygame.sprite.LayeredUpdates()
         self.all_enemies = pygame.sprite.LayeredUpdates()
         self.all_attacks = pygame.sprite.LayeredUpdates()
+        self.town = pygame.sprite.LayeredUpdates()
+
         self.create_tilemap()
         self.all_sprites.add(PlayerTest(self, 1, 2))
+        self.all_sprites.add(Town(self, 27, 22))
         self.create_enemies()
 
     def events(self):
