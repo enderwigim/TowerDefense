@@ -23,6 +23,9 @@ class Game:
                 if column == "1":
                     Wall(self, j, i)
 
+    def create_enemies(self):
+        Enemy(self, 1, 1)
+
     def new(self):
         # A new game starts
         self.playing = True
@@ -31,9 +34,9 @@ class Game:
         self.all_blocks = pygame.sprite.LayeredUpdates()
         self.all_enemies = pygame.sprite.LayeredUpdates()
         self.all_attacks = pygame.sprite.LayeredUpdates()
-
         self.create_tilemap()
         self.all_sprites.add(PlayerTest(self, 1, 2))
+        self.create_enemies()
 
     def events(self):
         for event in pygame.event.get():

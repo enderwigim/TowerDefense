@@ -1,7 +1,8 @@
 import pygame
 from config import *
-import math
-import random
+# import math
+# import random
+
 
 class PlayerTest(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -24,7 +25,6 @@ class PlayerTest(pygame.sprite.Sprite):
 
         self.image = pygame.Surface([self.width, self.height])
         self.image.fill(RED)
-
 
         self.rect = self.image.get_rect()
         self.rect.x = self.x
@@ -94,3 +94,85 @@ class Wall(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
+
+
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, game, x, y):
+        super().__init__()
+
+        self.game = game
+        self._layer = ENEMIES_LAYER
+        self.groups = self.game.all_sprites, self.game.all_enemies
+        pygame.sprite.Sprite.__init__(self, self.groups)
+
+        self.x = x * TILESIZE
+        self.y = y * TILESIZE
+        self.width = TILESIZE
+        self.height = TILESIZE
+
+        self.image = pygame.Surface([self.width, self.height])
+        self.image.fill(GREEN)
+
+        self.rect = self.image.get_rect()
+        self.can_walk = False
+        self.initial_position()
+
+        self.x_change = 0
+        self.y_change = 0
+        self.facing = "right"
+
+    def initial_position(self):
+        # Won't appear on a Wall
+        while not self.can_walk:
+            hits = pygame.sprite.spritecollide(self, self.game.all_blocks, False)
+            if hits:
+                self.rect.y += TILESIZE
+            else:
+                self.rect.y += TILESIZE / 2
+                self.can_walk = True
+
+    def update(self):
+        self.movement()
+
+        self.rect.x += self.x_change
+        self.collision("x")
+
+        self.rect.y += self.y_change
+        self.collision("y")
+
+        self.x_change = 0
+        self.y_change = 0
+
+
+    def collision(self, direction):
+        if direction == "x":
+            hits = pygame.sprite.spritecollide(self, self.game.all_blocks, False)
+            if hits:
+                # Go right
+                if self.x_change > 0:
+                    self.rect.x = hits[0].rect.left - self.rect.width
+                    self.facing = "down"
+                # Go left
+                if self.x_change < 0:
+                    self.rect.x = hits[0].rect.right
+                    self.facing = "down"
+
+        if direction == "y":
+            hits = pygame.sprite.spritecollide(self, self.game.all_blocks, False)
+            if hits:
+                if self.y_change > 0:
+                    self.rect.y = hits[0].rect.top - self.rect.height
+                    self.facing = "right"
+                if self.y_change < 0:
+                    self.rect.y = hits[0].rect.bottom
+                    self.facing = "left"
+
+    def movement(self):
+        if self.facing == "right":
+            self.x_change += PLAYER_SPEED
+        if self.facing == "left":
+            self.x_change -= PLAYER_SPEED
+        if self.facing == "down":
+            self.y_change += PLAYER_SPEED
+        if self.facing == "up":
+            self.y_change -= PLAYER_SPEED

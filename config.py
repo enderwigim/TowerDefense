@@ -9,8 +9,13 @@ PLAYER_SPEED = 3
 # Colors
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
+GREEN = (0, 255, 0)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+
+# Enemies related
+ENEMIES_LAYER = 2
+
 
 # MAP RELATED
 WALL_LAYER = 1
