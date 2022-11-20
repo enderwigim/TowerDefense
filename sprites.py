@@ -101,7 +101,7 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
         super().__init__()
 
-        self.health = 5
+        self.health = 2
         self.game = game
         self._layer = ENEMIES_LAYER
         self.groups = self.game.all_sprites, self.game.all_enemies
@@ -213,11 +213,10 @@ class Town(pygame.sprite.Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
 
-
-
     def update(self):
         if self.health == 0:
             self.kill()
+
 
 class Turret(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -243,10 +242,9 @@ class Turret(pygame.sprite.Sprite):
     def update(self):
         self.create_bullets()
 
-
     def create_bullets(self):
         rand_num = numpy.random.uniform(0, 50)
-        if int(rand_num) == 25:
+        if int(rand_num) == 1:
             new_bullet = Bullets(self.game, self.rect.x, self.rect.y)
             self.game.all_sprites.add(new_bullet)
 
@@ -277,12 +275,17 @@ class Bullets(pygame.sprite.Sprite):
 
     def move_to_enemy(self):
         # Find direction vector (dx, dy) between enemy and player.
-        dx, dy = self.game.all_enemies.get_sprite(0).rect.x - self.rect.x, self.game.all_enemies.get_sprite(0).rect.y - self.rect.y
-        dist = math.hypot(dx, dy)
-        dx, dy = dx / dist, dy / dist  # Normalize.
-        # Move along this normalized vector towards the player at current speed.
-        self.rect.x += dx * BULLET_SPEED
-        self.rect.y += dy * BULLET_SPEED
+        try:
+            dx, dy = self.game.all_enemies.get_sprite(0).rect.x - self.rect.x, self.game.all_enemies.get_sprite(0).rect.y - self.rect.y
+        except IndexError:
+            # If enemy was killed, the bullets will disappear
+            self.kill()
+        else:
+            dist = math.hypot(dx, dy)
+            dx, dy = dx / dist, dy / dist  # Normalize.
+            # Move along this normalized vector towards the player at current speed.
+            self.rect.x += dx * BULLET_SPEED
+            self.rect.y += dy * BULLET_SPEED
 
     def attack_enemy(self):
         hit_enemy = pygame.sprite.spritecollide(self, self.game.all_enemies, False)
@@ -291,3 +294,12 @@ class Bullets(pygame.sprite.Sprite):
             hit_enemy[0].health -= 1
             print(hit_enemy[0].health)
             self.kill()
+
+
+class MouseUser:
+    def __init__(self, game):
+        self.game = game
+
+    def create_turrets(self, tx, ty):
+        # Input mouse position as new Turret x and new Turret y.
+        self.game.all_sprites.add(Turret(self.game, tx, ty))
