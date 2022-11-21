@@ -7,21 +7,16 @@ import random
 
 class Game:
     def __init__(self):
-        self.mouse = None
-        self.bullets = None
-        self.town = None
-        self.player = None
-        self.all_attacks = None
-        self.all_enemies = None
-        self.all_blocks = None
-        self.playing = None
-        self.all_sprites = None
-        self.turrets = None
+
         pygame.init()
+
         self.screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
         self.clock = pygame.time.Clock()
         # self.font = pygame.font.Font('Arial', 32)
         self.running = True
+
+        self.enemy_sprite_sheet = SpriteSheet("Assets/Enemies_Turrets", "enemy.png")
+        self.terrain_sprite_sheet = SpriteSheet("Assets/Map", "Tiles.png")
         self.amount_of_enemies = 0
         self.last_time_stamp = 0
 
@@ -30,6 +25,8 @@ class Game:
             for j, column in enumerate(row):
                 if column == "1":
                     Wall(self, j, i)
+                else:
+                    Road(self, j, i)
 
     def create_enemies(self):
         Enemy(self, 1, 1)
@@ -41,11 +38,13 @@ class Game:
         self.mouse = MouseUser(self)
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.all_blocks = pygame.sprite.LayeredUpdates()
+        self.all_road = pygame.sprite.LayeredUpdates()
         self.all_enemies = pygame.sprite.LayeredUpdates()
         self.all_attacks = pygame.sprite.LayeredUpdates()
         self.town = pygame.sprite.LayeredUpdates()
         self.turrets = pygame.sprite.LayeredUpdates()
         self.bullets = pygame.sprite.LayeredUpdates()
+        self.shop = Shop(self)
 
         self.create_tilemap()
         self.all_sprites.add(PlayerTest(self, 1, 2))
@@ -66,6 +65,7 @@ class Game:
 
     def update(self):
         self.all_sprites.update()
+        self.shop.get_coins()
 
     def draw(self):
         self.screen.fill(BLACK)
@@ -76,13 +76,11 @@ class Game:
     def main(self):
         # game loop
         while self.playing:
-            time_stamp = pygame.time.get_ticks()
-            if (time_stamp - self.last_time_stamp) >= 500 and self.amount_of_enemies <= 10:
+            time_stamp_enemies = pygame.time.get_ticks()
+            if (time_stamp_enemies - self.last_time_stamp) >= 1000 and self.amount_of_enemies <= 10:
                 self.create_enemies()
-                self.last_time_stamp = time_stamp
                 self.amount_of_enemies += 1
-            else:
-                pass
+                self.last_time_stamp = time_stamp_enemies
 
             self.events()
             self.draw()

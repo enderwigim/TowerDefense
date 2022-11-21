@@ -1,9 +1,19 @@
 import pygame
 from config import *
 import math
+import os
 import numpy
 # import random
 
+class SpriteSheet:
+    def __init__(self, directory, file):
+        self.sheet = pygame.image.load(os.path.join(directory, file)).convert()
+
+    def get_sprite(self, x, y, width, height):
+        sprite = pygame.Surface([width, height])
+        sprite.blit(self.sheet, (0, 0), (x, y, width, height))
+        sprite.set_colorkey(BLACK)
+        return sprite
 
 class PlayerTest(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -89,8 +99,27 @@ class Wall(pygame.sprite.Sprite):
         self.width = TILESIZE
         self.height = TILESIZE
 
-        self.image = pygame.Surface([self.width, self.height])
-        self.image.fill(BLUE)
+        self.image = self.game.terrain_sprite_sheet.get_sprite(130, 229, self.width, self.height)
+
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y
+
+class Road(pygame.sprite.Sprite):
+    def __init__(self, game, x, y):
+        super().__init__()
+
+        self.game = game
+        self._layer = WALL_LAYER
+        self.groups = self.game.all_sprites, self.game.all_road
+        pygame.sprite.Sprite.__init__(self, self.groups)
+
+        self.x = x * TILESIZE
+        self.y = y * TILESIZE
+        self.width = TILESIZE
+        self.height = TILESIZE
+
+        self.image = self.game.terrain_sprite_sheet.get_sprite(30, 387, self.width, self.height)
 
         self.rect = self.image.get_rect()
         self.rect.x = self.x
@@ -112,8 +141,7 @@ class Enemy(pygame.sprite.Sprite):
         self.width = TILESIZE
         self.height = TILESIZE
 
-        self.image = pygame.Surface([self.width, self.height])
-        self.image.fill(GREEN)
+        self.image = self.game.enemy_sprite_sheet.get_sprite(0, 0, self.width, self.height)
 
         self.rect = self.image.get_rect()
         self.can_walk = False
@@ -240,6 +268,7 @@ class Turret(pygame.sprite.Sprite):
         self.rect.y = self.y
 
     def update(self):
+        # self.in_the_road()
         self.create_bullets()
 
     def create_bullets(self):
@@ -247,6 +276,12 @@ class Turret(pygame.sprite.Sprite):
         if int(rand_num) == 1:
             new_bullet = Bullets(self.game, self.rect.x, self.rect.y)
             self.game.all_sprites.add(new_bullet)
+
+    def in_the_road(self):
+        # Check if the turret is not stuck in the middle in the road.
+        in_the_road = pygame.sprite.spritecollide(self, self.game.all_blocks, False)
+        if not in_the_road:
+            self.kill()
 
 
 class Bullets(pygame.sprite.Sprite):
@@ -292,7 +327,6 @@ class Bullets(pygame.sprite.Sprite):
 
         if hit_enemy:
             hit_enemy[0].health -= 1
-            print(hit_enemy[0].health)
             self.kill()
 
 
@@ -301,5 +335,34 @@ class MouseUser:
         self.game = game
 
     def create_turrets(self, tx, ty):
-        # Input mouse position as new Turret x and new Turret y.
-        self.game.all_sprites.add(Turret(self.game, tx, ty))
+        # Input mouse position as new Turret x and new Turret y. If it's in the road, in_the_road() kills it.
+        if self.game.shop.coins >= 700:
+            self.game.all_sprites.add(Turret(self.game, tx, ty))
+            self.in_the_road()
+            self.game.shop.coins -= 700
+        else:
+            print("Not enough coins!")
+
+    def in_the_road(self):
+        # Check if the turret has been created in the middle of the road, it kills it.
+        last_turret = self.game.turrets.get_sprite(-1)
+        in_the_road = pygame.sprite.spritecollide(last_turret, self.game.all_blocks, False)
+        if not in_the_road:
+            last_turret.kill()
+
+
+class Shop:
+    def __init__(self, game):
+        self.game = game
+        self.coins = 0
+        self.last_time_stamp = 0
+
+    def get_coins(self):
+        time_stamp = pygame.time.get_ticks()
+        if (time_stamp - self.last_time_stamp) >= TIME_TO_GET_COINS:
+            self.coins += 100
+            self.last_time_stamp = time_stamp
+            print(self.coins)
+        else:
+            pass
+
