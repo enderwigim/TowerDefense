@@ -327,6 +327,7 @@ class Bullets(pygame.sprite.Sprite):
 
         if hit_enemy:
             hit_enemy[0].health -= 1
+            self.game.shop.coins += 50
             self.kill()
 
 
@@ -356,13 +357,37 @@ class Shop:
         self.game = game
         self.coins = 0
         self.last_time_stamp = 0
+        self.coin_sprite = Coin(self.game, 28, 1)
 
     def get_coins(self):
         time_stamp = pygame.time.get_ticks()
         if (time_stamp - self.last_time_stamp) >= TIME_TO_GET_COINS:
             self.coins += 100
             self.last_time_stamp = time_stamp
-            print(self.coins)
         else:
             pass
 
+    def draw_coins(self):
+        font_coins = FONT.render(f"{self.game.shop.coins}", True, WHITE)
+        self.game.screen.blit(font_coins, (29 * 32, 26))
+        pygame.display.update()
+
+
+class Coin(pygame.sprite.Sprite):
+    def __init__(self, game, x, y):
+        super().__init__()
+        self.game = game
+        self._layer = BULLET_LAYER
+        self.groups = self.game.all_sprites
+        pygame.sprite.Sprite.__init__(self, self.groups)
+
+        self.x = x * TILESIZE
+        self.y = y * TILESIZE
+        self.width = TILESIZE
+        self.height = TILESIZE
+
+        self.image = self.game.coin_sprite_sheet.get_sprite(0, 0, self.width, self.height)
+
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y

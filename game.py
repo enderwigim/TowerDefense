@@ -5,6 +5,9 @@ from sprites import *
 import sys
 import random
 
+
+
+
 class Game:
     def __init__(self):
 
@@ -17,6 +20,7 @@ class Game:
 
         self.enemy_sprite_sheet = SpriteSheet("Assets/Enemies_Turrets", "enemy.png")
         self.terrain_sprite_sheet = SpriteSheet("Assets/Map", "Tiles.png")
+        self.coin_sprite_sheet = SpriteSheet("Assets/Enemies_Turrets", "Coin.png")
         self.amount_of_enemies = 0
         self.last_time_stamp = 0
 
@@ -71,6 +75,7 @@ class Game:
         self.screen.fill(BLACK)
         self.all_sprites.draw(self.screen)
         self.clock.tick(FPS)
+        self.shop.draw_coins()
         pygame.display.update()
 
     def main(self):

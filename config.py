@@ -1,3 +1,8 @@
+# Font
+import pygame.font
+pygame.font.init()
+FONT = pygame.font.SysFont('comicsans', 30)
+
 # Screen Related
 WIN_WIDTH, WIN_HEIGHT = 1024, 763
 TILESIZE = 32
