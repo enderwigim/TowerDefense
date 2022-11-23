@@ -47,6 +47,7 @@ class Game:
         self.all_attacks = pygame.sprite.LayeredUpdates()
         self.town = pygame.sprite.LayeredUpdates()
         self.turrets = pygame.sprite.LayeredUpdates()
+        self.crossbow = pygame.sprite.LayeredUpdates()
         self.bullets = pygame.sprite.LayeredUpdates()
         self.shop = Shop(self)
 
@@ -64,8 +65,13 @@ class Game:
                 if event.button == 1:  # Right Click
                     mx = pygame.mouse.get_pos()[0]
                     my = pygame.mouse.get_pos()[1]
-                    # They are divided by 32 because the object position is * 32 when you create it.
-                    self.mouse.create_turrets(tx=mx//32, ty=my//32)
+                    if mx in CROSSBOW_BUTTON_X and my in CROSSBOW_BUTTON_Y:
+                        self.shop.cross_button.click_button()
+                    elif mx in TURRET_BUTTON_X and my in TURRET_BUTTON_Y:
+                        self.shop.turret_button.click_button()
+                    else:
+                        # They are divided by 32 because the object position is * 32 when you create it.
+                        self.mouse.create_defense(mx//32, my//32)
 
     def update(self):
         self.all_sprites.update()
