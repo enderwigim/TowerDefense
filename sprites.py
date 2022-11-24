@@ -304,15 +304,16 @@ class Crossbow(pygame.sprite.Sprite):
 
         self.x = x * TILESIZE
         self.y = y * TILESIZE
-        self.width = TILESIZE
-        self.height = TILESIZE
+        self.width = TILESIZE * 2
+        self.height = TILESIZE * 2
 
-        self.image = pygame.Surface([self.width, self.height])
-        self.image.fill(BLACK)
+        self.image = pygame.transform.scale(pygame.image.load(os.path.join("Assets/Enemies_Turrets", "CrossBow.png")),
+                                            (64, 64))
 
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
+
 
     def update(self):
         # self.in_the_road()
@@ -323,11 +324,13 @@ class Crossbow(pygame.sprite.Sprite):
 
             enemy_x = self.game.all_enemies.get_sprite(enemy).rect.x
             enemy_y = self.game.all_enemies.get_sprite(enemy).rect.y
+
             if self.rect.x + CROSSBOW_RANGE > enemy_x > self.rect.x - CROSSBOW_RANGE and \
                     self.rect.y + CROSSBOW_RANGE > enemy_y > self.rect.y - CROSSBOW_RANGE:
                 rand_num = numpy.random.uniform(0, 150)
 
                 if int(rand_num) == 1:
+
                     enemy_to_follow = self.game.all_enemies.get_sprite(enemy)
                     new_bullet = Bullets(self.game, self.rect.x, self.rect.y, self.bullet_color, enemy_to_follow)
                     self.game.all_sprites.add(new_bullet)
