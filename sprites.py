@@ -253,6 +253,7 @@ class Turret(pygame.sprite.Sprite):
         self.game = game
         self._layer = TURRET_LAYER
         self.groups = self.game.turrets
+        self.bullet_color = YELLOW
         pygame.sprite.Sprite.__init__(self, self.groups)
 
         self.x = x * TILESIZE
@@ -272,10 +273,17 @@ class Turret(pygame.sprite.Sprite):
         self.create_bullets()
 
     def create_bullets(self):
-        rand_num = numpy.random.uniform(0, 50)
-        if int(rand_num) == 1:
-            new_bullet = Bullets(self.game, self.rect.x, self.rect.y)
-            self.game.all_sprites.add(new_bullet)
+        for enemy in range(0, len(self.game.all_enemies)):
+
+            enemy_x = self.game.all_enemies.get_sprite(enemy).rect.x
+            enemy_y = self.game.all_enemies.get_sprite(enemy).rect.y
+            if self.rect.x + TURRET_RANGE > enemy_x > self.rect.x - TURRET_RANGE and \
+                    self.rect.y + TURRET_RANGE > enemy_y > self.rect.y - TURRET_RANGE:
+                rand_num = numpy.random.uniform(0, 50)
+                if int(rand_num) == 1:
+                    enemy_to_follow = self.game.all_enemies.get_sprite(enemy)
+                    new_bullet = Bullets(self.game, self.rect.x, self.rect.y, self.bullet_color, enemy_to_follow)
+                    self.game.all_sprites.add(new_bullet)
 
     def in_the_road(self):
         # Check if the turret is not stuck in the middle in the road.
@@ -290,7 +298,8 @@ class Crossbow(pygame.sprite.Sprite):
 
         self.game = game
         self._layer = TURRET_LAYER
-        self.groups = self.game.crossbow
+        self.groups = self.game.crossbow, self.game.all_sprites
+        self.bullet_color = BLACK
         pygame.sprite.Sprite.__init__(self, self.groups)
 
         self.x = x * TILESIZE
@@ -310,10 +319,18 @@ class Crossbow(pygame.sprite.Sprite):
         self.create_bullets()
 
     def create_bullets(self):
-        rand_num = numpy.random.uniform(0, 50)
-        if int(rand_num) == 1:
-            new_bullet = Bullets(self.game, self.rect.x, self.rect.y)
-            self.game.all_sprites.add(new_bullet)
+        for enemy in range(0, len(self.game.all_enemies)):
+
+            enemy_x = self.game.all_enemies.get_sprite(enemy).rect.x
+            enemy_y = self.game.all_enemies.get_sprite(enemy).rect.y
+            if self.rect.x + CROSSBOW_RANGE > enemy_x > self.rect.x - CROSSBOW_RANGE and \
+                    self.rect.y + CROSSBOW_RANGE > enemy_y > self.rect.y - CROSSBOW_RANGE:
+                rand_num = numpy.random.uniform(0, 150)
+
+                if int(rand_num) == 1:
+                    enemy_to_follow = self.game.all_enemies.get_sprite(enemy)
+                    new_bullet = Bullets(self.game, self.rect.x, self.rect.y, self.bullet_color, enemy_to_follow)
+                    self.game.all_sprites.add(new_bullet)
 
     def in_the_road(self):
         # Check if the turret is not stuck in the middle in the road.
@@ -323,7 +340,7 @@ class Crossbow(pygame.sprite.Sprite):
 
 
 class Bullets(pygame.sprite.Sprite):
-    def __init__(self, game, x, y):
+    def __init__(self, game, x, y, color, enemy_to_follow):
         super().__init__()
         self.game = game
         self._layer = BULLET_LAYER
@@ -332,15 +349,17 @@ class Bullets(pygame.sprite.Sprite):
 
         self.x = x
         self.y = y
-        self.width = TILESIZE
-        self.height = TILESIZE
+        self.width = 5
+        self.height = 10
 
         self.image = pygame.Surface([self.width, self.height])
-        self.image.fill(YELLOW)
+        self.image.fill(color)
 
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
+
+        self.enemy_to_follow = enemy_to_follow
 
     def update(self):
         self.move_to_enemy()
@@ -349,16 +368,23 @@ class Bullets(pygame.sprite.Sprite):
     def move_to_enemy(self):
         # Find direction vector (dx, dy) between enemy and player.
         try:
-            dx, dy = self.game.all_enemies.get_sprite(0).rect.x - self.rect.x, self.game.all_enemies.get_sprite(0).rect.y - self.rect.y
+            dx, dy = self.enemy_to_follow.rect.x - self.rect.x, self.enemy_to_follow.rect.y - self.rect.y
         except IndexError:
             # If enemy was killed, the bullets will disappear
             self.kill()
         else:
-            dist = math.hypot(dx, dy)
-            dx, dy = dx / dist, dy / dist  # Normalize.
-            # Move along this normalized vector towards the player at current speed.
-            self.rect.x += dx * BULLET_SPEED
-            self.rect.y += dy * BULLET_SPEED
+            if dx == 0 or dy == 0:
+                self.kill()
+            if self.enemy_to_follow.health == 0:
+                self.kill()
+            else:
+                dist = math.hypot(dx, dy)
+                try: dx, dy = dx / dist, dy / dist  # Normalize.
+                except ZeroDivisionError:
+                    pass
+                # Move along this normalized vector towards the player at current speed.
+                self.rect.x += dx * BULLET_SPEED
+                self.rect.y += dy * BULLET_SPEED
 
     def attack_enemy(self):
         hit_enemy = pygame.sprite.spritecollide(self, self.game.all_enemies, False)
@@ -375,19 +401,19 @@ class MouseUser:
 
     def create_turrets(self, tx, ty):
         # Input mouse position as new Turret x and new Turret y. If it's in the road, in_the_road() kills it.
-        if self.game.shop.coins >= 700 and self.game.shop.turret_button.button_on_off == "on":
+        if self.game.shop.coins >= TURRET_COST and self.game.shop.turret_button.button_on_off == "on":
             self.game.all_sprites.add(Turret(self.game, tx, ty))
             self.turret_in_the_road()
-            self.game.shop.coins -= 700
+            self.game.shop.coins -= TURRET_COST
         else:
             pass
 
     def create_crossbow(self, tx, ty):
         # Input mouse position as new Turret x and new Turret y. If it's in the road, in_the_road() kills it.
-        if self.game.shop.coins >= 1000 and self.game.shop.cross_button.button_on_off == "on":
+        if self.game.shop.coins >= CROSSBOW_COST and self.game.shop.cross_button.button_on_off == "on":
             self.game.all_sprites.add(Crossbow(self.game, tx, ty))
             self.crossbow_in_the_road()
-            self.game.shop.coins -= 1000
+            self.game.shop.coins -= CROSSBOW_RANGE
         else:
             pass
 
