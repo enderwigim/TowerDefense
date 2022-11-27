@@ -23,6 +23,7 @@ class Game:
         self.coin_sprite_sheet = SpriteSheet("Assets/Enemies_Turrets", "Coin.png")
         self.amount_of_enemies = 0
         self.last_time_stamp = 0
+        self.timer = 0
 
     def create_tilemap(self):
         for i, row in enumerate(TILEMAP):
@@ -54,7 +55,8 @@ class Game:
         self.create_tilemap()
         self.all_sprites.add(PlayerTest(self, 1, 2))
         self.all_sprites.add(Town(self, 27, 22))
-        self.all_sprites.add(Turret(self, 22, 22))
+        self.all_sprites.add(Turret(self, 3, 10))
+
 
     def events(self):
         for event in pygame.event.get():

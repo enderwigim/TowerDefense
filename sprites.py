@@ -176,7 +176,8 @@ class Enemy(pygame.sprite.Sprite):
         self.attack_town()
 
         if self.health <= 0:
-            self.kill()
+            # self.kill()
+            pass
 
     def collision(self, direction):
         if direction == "x":
@@ -207,6 +208,7 @@ class Enemy(pygame.sprite.Sprite):
             self.game.town.get_sprite(0).health -= 1
             print(self.game.town.get_sprite(0).health)
             self.kill()
+
 
     def movement(self):
         if self.facing == "right":
@@ -268,22 +270,54 @@ class Turret(pygame.sprite.Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
 
+        self.enemies_in_range = []
+
+
     def update(self):
         # self.in_the_road()
         self.create_bullets()
 
+
     def create_bullets(self):
+
         for enemy in range(0, len(self.game.all_enemies)):
 
             enemy_x = self.game.all_enemies.get_sprite(enemy).rect.x
             enemy_y = self.game.all_enemies.get_sprite(enemy).rect.y
+
             if self.rect.x + TURRET_RANGE > enemy_x > self.rect.x - TURRET_RANGE and \
                     self.rect.y + TURRET_RANGE > enemy_y > self.rect.y - TURRET_RANGE:
-                rand_num = numpy.random.uniform(0, 50)
-                if int(rand_num) == 1:
+                self.add_to_list(self.game.all_enemies.get_sprite(enemy))
+
+            else:
+                self.remove_from_list(self.game.all_enemies.get_sprite(enemy))
+
+            if self.enemies_in_range:
+                if self.game.all_enemies.get_sprite(enemy) == self.enemies_in_range[0]:
+                    # First we need to check if the enemy was the first one to enter into our turrets range.
+                    if self.game.all_enemies.get_sprite(enemy).health <= 0:
+                        # We check it's health and if it's dead, we remove the enemy from our range list
+                        # self.remove_from_list(self.game.all_enemies.get_sprite(enemy))
+                        pass
+                    # Shooting random sistem
+
+                    # rand_num = numpy.random.uniform(0, 50)
+                    # if int(rand_num) == 1:
                     enemy_to_follow = self.game.all_enemies.get_sprite(enemy)
-                    new_bullet = Bullets(self.game, self.rect.x, self.rect.y, self.bullet_color, enemy_to_follow)
+                    new_bullet = Bullets(self.game, self.rect.x, self.rect.y, self.bullet_color, enemy_to_follow,
+                                         self, enemy)
                     self.game.all_sprites.add(new_bullet)
+
+    def add_to_list(self, enemy):
+        if enemy not in self.enemies_in_range:
+            self.enemies_in_range.append(enemy)
+
+    def remove_from_list(self, enemy):
+        if enemy in self.enemies_in_range:
+            self.enemies_in_range.remove(enemy)
+
+
+
 
     def in_the_road(self):
         # Check if the turret is not stuck in the middle in the road.
@@ -314,12 +348,16 @@ class Crossbow(pygame.sprite.Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
 
+        self.enemies_in_range = []
+
 
     def update(self):
         # self.in_the_road()
+
         self.create_bullets()
 
     def create_bullets(self):
+
         for enemy in range(0, len(self.game.all_enemies)):
 
             enemy_x = self.game.all_enemies.get_sprite(enemy).rect.x
@@ -327,13 +365,32 @@ class Crossbow(pygame.sprite.Sprite):
 
             if self.rect.x + CROSSBOW_RANGE > enemy_x > self.rect.x - CROSSBOW_RANGE and \
                     self.rect.y + CROSSBOW_RANGE > enemy_y > self.rect.y - CROSSBOW_RANGE:
-                rand_num = numpy.random.uniform(0, 150)
+                self.add_to_list(self.game.all_enemies.get_sprite(enemy))
 
-                if int(rand_num) == 1:
+            else:
+                self.remove_from_list(self.game.all_enemies.get_sprite(enemy))
 
-                    enemy_to_follow = self.game.all_enemies.get_sprite(enemy)
-                    new_bullet = Bullets(self.game, self.rect.x, self.rect.y, self.bullet_color, enemy_to_follow)
-                    self.game.all_sprites.add(new_bullet)
+            if self.enemies_in_range:
+                if self.game.all_enemies.get_sprite(enemy) == self.enemies_in_range[0]:
+                    # First we need to check if the enemy was the first one to enter into our turrets range.
+                    if self.game.all_enemies.get_sprite(enemy).health <= 0:
+                        # We check it's health and if it's dead, we remove the enemy from our range list
+                        self.remove_from_list(self.game.all_enemies.get_sprite(enemy))
+                    # Shooting random sistem
+                    rand_num = numpy.random.uniform(0, 50)
+                    if int(rand_num) == 1:
+                        enemy_to_follow = self.game.all_enemies.get_sprite(enemy)
+                        new_bullet = Bullets(self.game, self.rect.x, self.rect.y, self.bullet_color, enemy_to_follow,
+                                             self, enemy)
+                        self.game.all_sprites.add(new_bullet)
+
+    def add_to_list(self, enemy):
+        if enemy not in self.enemies_in_range:
+            self.enemies_in_range.append(enemy)
+
+    def remove_from_list(self, enemy):
+        if enemy in self.enemies_in_range:
+            self.enemies_in_range.remove(enemy)
 
     def in_the_road(self):
         # Check if the turret is not stuck in the middle in the road.
@@ -343,7 +400,7 @@ class Crossbow(pygame.sprite.Sprite):
 
 
 class Bullets(pygame.sprite.Sprite):
-    def __init__(self, game, x, y, color, enemy_to_follow):
+    def __init__(self, game, x, y, color, enemy_to_follow, weapon_that_launched, enemy_index):
         super().__init__()
         self.game = game
         self._layer = BULLET_LAYER
@@ -363,6 +420,8 @@ class Bullets(pygame.sprite.Sprite):
         self.rect.y = self.y
 
         self.enemy_to_follow = enemy_to_follow
+        self.weapon_that_launched = weapon_that_launched
+        self.enemy_index = enemy_index
 
     def update(self):
         self.move_to_enemy()
@@ -375,11 +434,11 @@ class Bullets(pygame.sprite.Sprite):
         except IndexError:
             # If enemy was killed, the bullets will disappear
             self.kill()
+
         else:
-            if dx == 0 or dy == 0:
+            if self.enemy_to_follow.health <= 0:
                 self.kill()
-            if self.enemy_to_follow.health == 0:
-                self.kill()
+
             else:
                 dist = math.hypot(dx, dy)
                 try: dx, dy = dx / dist, dy / dist  # Normalize.
@@ -390,10 +449,11 @@ class Bullets(pygame.sprite.Sprite):
                 self.rect.y += dy * BULLET_SPEED
 
     def attack_enemy(self):
-        hit_enemy = pygame.sprite.spritecollide(self, self.game.all_enemies, False)
+        hit_enemy = self.enemy_to_follow.rect.colliderect(self)
 
         if hit_enemy:
-            hit_enemy[0].health -= 1
+            print("hit!")
+            # self.enemy_to_follow.health -= 1
             self.game.shop.coins += 50
             self.kill()
 
@@ -405,7 +465,8 @@ class MouseUser:
     def create_turrets(self, tx, ty):
         # Input mouse position as new Turret x and new Turret y. If it's in the road, in_the_road() kills it.
         if self.game.shop.coins >= TURRET_COST and self.game.shop.turret_button.button_on_off == "on":
-            self.game.all_sprites.add(Turret(self.game, tx, ty))
+            new_turret = Turret(self.game, tx, ty)
+            self.game.all_sprites.add(new_turret)
             self.turret_in_the_road()
             self.game.shop.coins -= TURRET_COST
         else:
@@ -567,5 +628,4 @@ class CrossBowButton(pygame.sprite.Sprite):
         self.game.shop.defense_to_buy = "crossbow"
 
         self.game.shop.turret_button.button_on_off = "off"
-
 
