@@ -2,6 +2,11 @@ import pygame
 from pygame.locals import *
 from config import *
 from sprites import *
+from map import *
+from user import *
+from shop import *
+from weapons import *
+from map import *
 import sys
 import random
 
@@ -49,13 +54,14 @@ class Game:
         self.town = pygame.sprite.LayeredUpdates()
         self.turrets = pygame.sprite.LayeredUpdates()
         self.crossbow = pygame.sprite.LayeredUpdates()
+        self.weapons = pygame.sprite.LayeredUpdates()
         self.bullets = pygame.sprite.LayeredUpdates()
         self.shop = Shop(self)
 
         self.create_tilemap()
-        self.all_sprites.add(PlayerTest(self, 1, 2))
         self.all_sprites.add(Town(self, 27, 22))
         self.all_sprites.add(Turret(self, 3, 10))
+        self.all_sprites.add(Crossbow(self, 27, 19))
 
 
     def events(self):
@@ -78,6 +84,8 @@ class Game:
     def update(self):
         self.all_sprites.update()
         self.shop.get_coins()
+        for n in range(len(self.turrets)):
+            print(f"Turret {n}: {self.turrets.get_sprite(n).timer}")
 
     def draw(self):
         self.screen.fill(BLACK)
